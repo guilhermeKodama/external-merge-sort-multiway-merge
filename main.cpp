@@ -12,7 +12,7 @@
 
 using namespace std;
 
-const long FILE_SIZE = 1000; // 10 GB 100000000000
+const long FILE_SIZE = 100000; // 10 GB 100000000000
 const string DATASET_PATH = "/Users/guilherme/Desktop/dataset.txt";
 
 
@@ -27,7 +27,7 @@ void createDataSet(string path){
         cout << "Arquivo está vazio" << endl;
         
         int min = 10;
-        int max = 100000;
+        int max = 1000000;
         
         for (int i = 0; i < FILE_SIZE-1; i++){
             file << min + (rand() % (int)(max - min + 1)) << "\n";

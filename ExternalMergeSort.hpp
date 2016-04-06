@@ -36,11 +36,9 @@ private:
         fstream *file;
         int *buffer,MAX,pos;
     };
-    int createKSortedFiles(string file);
-    string merge_sort(int size,int ini,int end,int h);
-    void divideAndConquer(int size,int ini,int h,string *files);
+    string merge_sort(int size,int ini);
+    void divideAndConquer(int size,int ini,string *files);
     void multiWayMerge(string file_name,string *files,int way,int buffer_size);
-    void merge(string path,int numArqs,int K);
     int procuraMenor(chunk *chunks,int numArqs,int K,int *menor);
     void salvaArquivo(string fileName,int *B,int size,int breakLine);
     void preencheBuffer(chunk *chunk,int buffer_size);
