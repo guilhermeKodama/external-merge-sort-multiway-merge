@@ -12,7 +12,7 @@
 
 using namespace std;
 
-const long FILE_SIZE = 100000; // 10 GB 100000000000
+const long FILE_SIZE = 1000; // 10 GB 100000000000 ; 800000000
 const string DATASET_PATH = "/Users/guilherme/Desktop/dataset.txt";
 
 

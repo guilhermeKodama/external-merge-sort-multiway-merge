@@ -2,56 +2,121 @@
 //  ExternalMegerSort.cpp
 //  paa trabalho1
 //
-//  Created by Guilherme Kenji Kodama on 14/03/16.
+//  Created by Guilherme Kenji Kodama
 //  Copyright © 2016 Guilherme Kenji Kodama. All rights reserved.
 //
 
 #include "ExternalMergeSort.hpp"
 
 #define AVAILABLE_MEMORY 10
-#define VIAS 3
-#define FILE_SIZE 100000
+#define VIAS 4
+#define FILE_SIZE 1000
 
 using namespace std;
 
 ExternalMergeSort::ExternalMergeSort(string path){
     
-    string *files = new string[VIAS];
-    divideAndConquer(FILE_SIZE, 0, files);
+    dataset = fopen("/Users/guilherme/Desktop/dataset.txt", "r");
     
-    /* realizar multiwaymerge com os arquivos criados nas intancias que retornaram */
+    generateInitialFiles();
     
-    multiWayMerge("/Users/guilherme/Desktop/external_merge_sort/output.txt", files, VIAS, AVAILABLE_MEMORY/VIAS+1);
     
-    delete[] files;
+//    string *files = new string[VIAS];
+//    divideAndConquer(FILE_SIZE, files);
+//    
+//    /* realizar multiwaymerge com os arquivos criados nas intancias que retornaram */
+//    
+//    multiWayMerge("/Users/guilherme/Desktop/external_merge_sort/output.txt", files, VIAS, AVAILABLE_MEMORY/VIAS+1);
+//    
+//    delete[] files;
+//    fclose(dataset);
 
 }
 
-string ExternalMergeSort::merge_sort(int size,int ini){
+void ExternalMergeSort::generateInitialFiles(){
     
-    cout << "INI: " << ini << "SIZE: " << size <<endl;
+    cout << "TO AQUI"<<endl;
+    
+    //alloca um buffer to tamanho da memoria disponível
+    int *B = new int[AVAILABLE_MEMORY];
+    
+    int number;
+    int pos = 0;
+    int chunkFiles = 0;
+    
+    //lê o arquivo até o final
+    while(!feof(dataset)){
+        
+        fscanf (dataset, "%d\n", &number);
+        
+        //preencho o buffer com os valores do arquivo muito grande
+        B[pos] = number;
+        pos++;
+        
+        //se eu preenchi todo o meu buffer
+        if(pos == AVAILABLE_MEMORY){
+            
+            //eu ordeno o meu buffer
+            sort(B,B+AVAILABLE_MEMORY);
+            
+            string fileName = CHUNK_PATH+"chunk_"+to_string(chunkFiles);
+            filesQueue.push(fileName);
+            
+            //salvo tudo em um arquivo/chunk do arquivo original
+            salvaArquivo(fileName,B,pos,0);
+            
+            pos = 0;
+            chunkFiles++;
+            
+        }
+        
+    }
+    
+    //salva o resto que ficou no buffer (rebarba)
+    if(pos != 0){
+        sort(B,B+AVAILABLE_MEMORY);
+        
+        string fileName = CHUNK_PATH+"chunk_"+to_string(chunkFiles);
+        filesQueue.push(fileName);
+        
+        salvaArquivo(fileName,B,pos,0);
+        
+        chunkFiles++;
+    }
+    
+    fclose(dataset);
+    
+}
+
+string ExternalMergeSort::merge_sort(int size){
+    
+    cout << "SIZE: " << size <<endl;
     
     if(size <= AVAILABLE_MEMORY){
-        string file = CHUNK_PATH + to_string(random());
+        
+        //criar chunk
         chunk *chunk = new struct chunk();
-        fstream f("/Users/guilherme/Desktop/dataset.txt",ios::in);
-        chunk->file = &f;
-        chunk->file->seekg(ini);
+        //arquivo
+        string file = CHUNK_PATH + to_string(random());
+        chunk->file = dataset;
+        //carrega esse segmento para a memória
         chunk->buffer = new int[size];
         preencheBuffer(chunk, size);
+        //ordena
         sort(chunk->buffer,chunk->buffer+size);
+        //salva em vários arquivos menores que cabem na memoria principal
         salvaArquivo(file,chunk->buffer,size,1);
-        chunk->file->close();
-        chunk->file = NULL;
-        
-       
+        //free file
+//        fclose(chunk->file);
+        //free chunk and buffer
         delete[] chunk->buffer;
         delete chunk;
         return file;
+        
     }
     
     string *files = new string[VIAS];
-    divideAndConquer(size, ini, files);
+    divideAndConquer(size, files);
     
      /* realizar multiwaymerge com os arquivos criados nas intancias que retornaram */
     
@@ -73,13 +138,12 @@ void ExternalMergeSort::multiWayMerge(string file_name,string *files,int way,int
         
         chunks[i] = *new chunk();
         
-        chunks[i].file = new fstream(files[i],ios::in);
+        chunks[i].file = fopen(files[i].c_str(), "r");
         chunks[i].MAX = 0;
         chunks[i].pos = 0;
         chunks[i].buffer = new int[AVAILABLE_MEMORY/VIAS+1];
         
         preencheBuffer(&chunks[i],AVAILABLE_MEMORY/VIAS+1);
-        
         
     }
     
@@ -117,21 +181,21 @@ void ExternalMergeSort::multiWayMerge(string file_name,string *files,int way,int
 
 }
 
-void ExternalMergeSort::divideAndConquer(int size,int ini,string *files){
+void ExternalMergeSort::divideAndConquer(int size,string *files){
     int newSize = size/VIAS;
     bool missing_value = (newSize * VIAS )!= size? true : false;
     for(int i = 0; i < VIAS; i++){
         if(i == 0){
             string file;
             if(missing_value){
-                file = merge_sort(newSize+ (int)(size - (newSize * VIAS )),(size*i));
+                file = merge_sort(newSize+ (int)(size - (newSize * VIAS )));
             }else{
-                file = merge_sort(newSize,(size*i));
+                file = merge_sort(newSize);
             }
             
             files[i] = (file);
         }else{
-            string file = merge_sort(newSize,(size*i));
+            string file = merge_sort(newSize);
             files[i] = (file);
         }
         
@@ -171,9 +235,6 @@ void ExternalMergeSort::preencheBuffer(chunk *chunk,int buffer_size){
         if(chunk->file == NULL)
             return;
          
-         if(chunk->file->fail())
-             cout << "ERROR AO PREENCHER O BUFFER" << endl;
-         
         chunk->pos = 0;
         chunk->MAX = 0;
         
@@ -181,12 +242,12 @@ void ExternalMergeSort::preencheBuffer(chunk *chunk,int buffer_size){
          
         
         for(int i=0; i < buffer_size; i++){
-            if(*chunk->file >> number){
+            if(!feof(chunk->file)){
+                fscanf (chunk->file, "%d\n", &number);
                 chunk->buffer[chunk->MAX] = number;
                 chunk->MAX++;
             }else{
-                chunk->file->close();
-                delete chunk->file;
+                fclose(chunk->file);
                 chunk->file = NULL;
                 return;
             }
@@ -199,28 +260,21 @@ void ExternalMergeSort::preencheBuffer(chunk *chunk,int buffer_size){
 
 
 void ExternalMergeSort::salvaArquivo(string fileName,int *B,int size,int breakLine){
-//    cout << fileName << endl;
     
     try {
-        fstream file(fileName,ios::out | ios::app);
+        FILE *f = fopen(fileName.c_str(),"a");
         
-        if(file.fail())
-            cerr << "Error ao salvar arquivo: " << strerror(errno) << endl;
-        
-        int pos = 0;
-        while (pos < size-1) {
-            file << B[pos] << "\n";
-            pos++;
+        for(int i =0; i<size-1;i++){
+            fprintf(f,"%d\n",B[i]);
         }
         
         if (breakLine == 0) {
-            file << B[size-1];
+            fprintf(f,"%d",B[size-1]);
         }else{
-            file << B[size-1] << "\n";
+            fprintf(f,"%d\n",B[size-1]);
         }
         
-        file.flush();
-        file.close();
+        fclose(f);
     } catch (std::ios_base::failure& e) {
         std::cerr << e.what() << '\n';
     }
