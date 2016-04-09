@@ -8,38 +8,34 @@
 
 #include <iostream>
 #include <fstream>
+#include <iostream>
+#include <stdio.h>
 #include "ExternalMergeSort.hpp"
 
 using namespace std;
 
-const long FILE_SIZE = 1000; // 10 GB 100000000000 ; 800000000
+const long FILE_SIZE = 4294967296/4;
 const string DATASET_PATH = "/Users/guilherme/Desktop/dataset.txt";
 
 
 
 void createDataSet(string path){
-    fstream file (path,ios::out | ios::in | ios::app);
     
-    if(file.fail())
-        cerr << "Error: " << strerror(errno);
+    FILE *file = fopen(DATASET_PATH.c_str(),"ab");
     
-    if(file.tellg() == 0){
-        cout << "Arquivo está vazio" << endl;
         
-        int min = 10;
-        int max = 1000000;
+    int min = 10;
+    int max = 1000000;
+    
+    for (int i = 0; i < FILE_SIZE; i++){
         
-        for (int i = 0; i < FILE_SIZE-1; i++){
-            file << min + (rand() % (int)(max - min + 1)) << "\n";
-        }
-        
-        file << min + (rand() % (int)(max - min + 1));
-        
-        file.flush();
-        
+        int number = min + (rand() % (int)(max - min + 1));
+        fwrite(&number, sizeof(int),1,file);
+    
     }
     
-    file.close();
+    fflush(file);
+    fclose(file);
 }
 
 

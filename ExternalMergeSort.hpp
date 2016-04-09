@@ -6,13 +6,6 @@
 //  Copyright © 2016 Guilherme Kenji Kodama. All rights reserved.
 //
 
-/*
- 
- N = numero total de elementos que posso carregar na RAM
- K = numero máximo de elementos em cada arquivo
- F = numero total de arquivos gerados
- 
- */
 
 #ifndef ExternalMergeSort_hpp
 #define ExternalMergeSort_hpp
@@ -37,7 +30,7 @@ private:
     //fila dos arquivos iniciais geradores de acordo com o tamanho do buffer
     queue <string> filesQueue;
     
-    const string CHUNK_PATH = "/Users/guilherme/Desktop/external_merge_sort/";
+    const string CHUNK_PATH = "/Users/guilherme/Desktop/chunks/";
     struct chunk {
         FILE *file;
         int *buffer,MAX,pos;
@@ -46,9 +39,10 @@ private:
     void divideAndConquer(int size,string *files);
     void multiWayMerge(string file_name,string *files,int way,int buffer_size);
     int procuraMenor(chunk *chunks,int numArqs,int K,int *menor);
-    void salvaArquivo(string fileName,int *B,int size,int breakLine);
+    void salvaArquivo(string fileName,int *B,unsigned long size,int breakLine);
     void preencheBuffer(chunk *chunk,int buffer_size);
-    void generateInitialFiles();
+    int generateInitialFiles();
+    void binaryToText(string binary,string text,int size);
 };
 
 #endif /* ExternalMergeSort_hpp */
