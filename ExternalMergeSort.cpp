@@ -8,29 +8,38 @@
 
 #include "ExternalMergeSort.hpp"
 
-#define AVAILABLE_MEMORY 4294967296/400
-#define VIAS 4
+#define MB_IN_BYTES (unsigned long long)1048576
+#define GB_IN_BYTES (unsigned long long) 1073741824
 
 using namespace std;
 
-ExternalMergeSort::ExternalMergeSort(string path){
+//incializando e declarando as variáveis estáticas
+unsigned long long ExternalMergeSort::AVAILABLE_MEMORY = 1000;
+int ExternalMergeSort::VIAS = 2;
+
+ExternalMergeSort::ExternalMergeSort(string dataset_path,string output_path,int memory_in_mb,int vias){
     
-    dataset = fopen("/Users/guilherme/Desktop/dataset.txt", "rb");
+    dataset = fopen(dataset_path.c_str(), "rb");
+    AVAILABLE_MEMORY = (memory_in_mb * MB_IN_BYTES) / sizeof(int);
+    VIAS = vias;
+    this->output_path = output_path;
     
+}
+
+void ExternalMergeSort::sortFile(){
     //separa o arquivo muito grande em diversos arquivos menores ordenados que cabem na memória
     int numFiles = generateInitialFiles();
     
     //começa o processo de divisão em conquista onde esses arquivos iniciais serão intercalados em arquivos maiores ordenados de acordo com o
     // numero de vias especificado
-    string *files = new string[VIAS];
+    string *files = new string[ExternalMergeSort::VIAS];
     divideAndConquer(numFiles, files);
-
+    
     /* realiza o multiwaymerge do ultimo grupo de arquivos para gerar o ultimo arquivo grande ordenado */
-    multiWayMerge("/Users/guilherme/Desktop/output.hex", files, VIAS, AVAILABLE_MEMORY/VIAS+1);
+    multiWayMerge(output_path, files, ExternalMergeSort::VIAS, ExternalMergeSort::AVAILABLE_MEMORY/ExternalMergeSort::VIAS+1);
     
     delete[] files;
     
-//    binaryToText("/Users/guilherme/Desktop/output.hex", "/Users/guilherme/Desktop/output.txt",1000);
 }
 
 void ExternalMergeSort::binaryToText(string binary, string text ,int size){
@@ -50,17 +59,15 @@ void ExternalMergeSort::binaryToText(string binary, string text ,int size){
 
 int ExternalMergeSort::generateInitialFiles(){
     
-    cout << "TO AQUI"<<endl;
-    
     //alloca um buffer to tamanho da memoria disponível
-    int *B = new int[AVAILABLE_MEMORY];
+    int *B = new int[ExternalMergeSort::AVAILABLE_MEMORY];
     
     int chunkFiles = 0;
     
     //lê o arquivo até o final
     while(!feof(dataset)){
         
-        unsigned long read = fread(B,sizeof(int),AVAILABLE_MEMORY,dataset);
+        unsigned long read = fread(B,sizeof(int),ExternalMergeSort::AVAILABLE_MEMORY,dataset);
     
         //eu ordeno o meu buffer
         sort(B,B+read);
@@ -84,8 +91,6 @@ int ExternalMergeSort::generateInitialFiles(){
 
 string ExternalMergeSort::merge_sort(int size){
     
-    cout << "SIZE: " << size <<endl;
-    
     if(size == 1){
         string file = filesQueue.front();
         filesQueue.pop();
@@ -98,7 +103,7 @@ string ExternalMergeSort::merge_sort(int size){
      /* realizar multiwaymerge com os arquivos criados nas intancias que retornaram */
     
     string file = CHUNK_PATH + to_string(random());
-    multiWayMerge(file,files,VIAS, AVAILABLE_MEMORY/VIAS+1);
+    multiWayMerge(file,files,ExternalMergeSort::VIAS, ExternalMergeSort::AVAILABLE_MEMORY/ExternalMergeSort::VIAS+1);
     
     delete[] files;
     
@@ -118,9 +123,9 @@ void ExternalMergeSort::multiWayMerge(string file_name,string *files,int way,int
         chunks[i].file = fopen(files[i].c_str(), "rb");
         chunks[i].MAX = 0;
         chunks[i].pos = 0;
-        chunks[i].buffer = new int[AVAILABLE_MEMORY/VIAS+1];
+        chunks[i].buffer = new int[ExternalMergeSort::AVAILABLE_MEMORY/ExternalMergeSort::VIAS+1];
         
-        preencheBuffer(&chunks[i],AVAILABLE_MEMORY/VIAS+1);
+        preencheBuffer(&chunks[i],ExternalMergeSort::AVAILABLE_MEMORY/ExternalMergeSort::VIAS+1);
         
     }
     
@@ -151,7 +156,7 @@ void ExternalMergeSort::multiWayMerge(string file_name,string *files,int way,int
     delete[] buffer;
     
     /*remove os arquivo de input*/
-    for(int i = 0; i < VIAS;i++){
+    for(int i = 0; i < ExternalMergeSort::VIAS;i++){
         remove(files[i].c_str());
     }
 
@@ -159,7 +164,7 @@ void ExternalMergeSort::multiWayMerge(string file_name,string *files,int way,int
 }
 
 void ExternalMergeSort::divideAndConquer(int size,string *files){
-    int newSize = size/VIAS;
+    int newSize = size/ExternalMergeSort::VIAS;
     int numFiles = 0;
     
     //checa se o numero de intancias é menor que o numero de vias
@@ -167,7 +172,7 @@ void ExternalMergeSort::divideAndConquer(int size,string *files){
         numFiles = size;
         newSize = 1;
     }else{
-        numFiles = VIAS;
+        numFiles = ExternalMergeSort::VIAS;
     }
     
     bool missing_value = (newSize * numFiles )!= size? true : false;

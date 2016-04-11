@@ -23,15 +23,19 @@ using namespace std;
 class ExternalMergeSort{
 
 public:
-    ExternalMergeSort(string path);
+    ExternalMergeSort(string dataset_path,string output_path,int memory_in_mb,int vias);
+    void sortFile();
 
 private:
-    //referência para o arquivo original
+    //refeência para o arquivo original
     FILE *dataset;
+    string output_path;
+    static unsigned long long AVAILABLE_MEMORY;
+    static int VIAS;
     //fila dos arquivos iniciais geradores de acordo com o tamanho do buffer
     queue <string> filesQueue;
     
-    const string CHUNK_PATH = "/Users/guilherme/Desktop/chunks/";
+    const string CHUNK_PATH = "./";
     struct chunk {
         FILE *file;
         int *buffer,MAX,pos;
